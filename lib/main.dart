@@ -1,19 +1,26 @@
 import 'dart:async';
+import 'dart:isolate';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
-import 'src/core/application/ui/app.dart';
-import 'src/core/core.dart';
+import 'src/app/index.dart';
+import 'src/core/index.dart';
 
-void main() {
-  // Set `enableInDevMode` to true to see reports while in debug mode
-  // This is only to be used for confirming that reports are being
-  // submitted as expected. It is not intended to be used for everyday
-  // development.
-  Crashlytics.instance.enableInDevMode = true;
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();
+
+  if (kDebugMode) {
+    // Force disable Crashlytics collection while doing every day development.
+    // Temporarily toggle this to true if you want to test crash reporting in your app.
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false);
+  }
   // Pass all uncaught errors from the framework to Crashlytics.
-  FlutterError.onError = Crashlytics.instance.recordFlutterError;
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
 
   FlavorConfig(
     flavor: Flavor.NONPROD,
@@ -23,7 +30,30 @@ void main() {
   );
 
   setupServiceLocator();
-  runZoned<Future<void>>(() async {
+  Isolate.current.addErrorListener(RawReceivePort((pair) async {
+    final List<dynamic> errorAndStacktrace = pair;
+    await FirebaseCrashlytics.instance.recordError(
+      errorAndStacktrace.first,
+      errorAndStacktrace.last,
+    );
+  }).sendPort);
+
+  runZonedGuarded(() {
     runApp(App());
-  }, onError: Crashlytics.instance.recordError);
+  }, (
+    dynamic exception,
+    StackTrace stack, {
+    dynamic reason,
+    Iterable<DiagnosticsNode> information = const [],
+    bool printDetails,
+  }) async {
+    getLogger().wtf(exception);
+    await FirebaseCrashlytics.instance.recordError(
+      exception,
+      stack,
+      reason: reason,
+      information: information,
+      printDetails: printDetails,
+    );
+  });
 }

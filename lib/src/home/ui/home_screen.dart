@@ -3,7 +3,9 @@ import 'dart:math';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_quick_start/src/core/core.dart';
+
+import '../../app/index.dart';
+import '../../core/index.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -51,7 +53,19 @@ class _HomeScreenState extends State<HomeScreen> {
               RaisedButton(
                 child: Text('Crash!'),
                 onPressed: () {
-                  sl<Crashlytics>().crash();
+                  sl<FirebaseCrashlytics>().crash();
+                },
+              ),
+              RaisedButton(
+                // this fails as it cannot find the Scaffold in the current BuildContext.
+                // for this to word, extract this button into its own widges to get a new BuildContext
+                child: Text('Stock Notification'),
+                onPressed: () {
+                  Scaffold.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('hello message'),
+                    ),
+                  );
                 },
               ),
               RaisedButton(

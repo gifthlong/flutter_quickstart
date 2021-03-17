@@ -3,15 +3,11 @@ import 'dart:math';
 import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_quick_start/src/core/analytics/bloc/analytics_bloc.dart';
-import 'package:flutter_quick_start/src/core/core.dart';
 
+import '../../core/index.dart';
 import '../bloc/sample_tab_navigation_screen_bloc.dart';
 
 class SampleTabNavigationScreen extends StatefulWidget {
-  final FirebaseAnalyticsObserver observer;
-  SampleTabNavigationScreen(this.observer);
-
   @override
   _SampleTabNavigationScreenState createState() =>
       _SampleTabNavigationScreenState();
@@ -21,7 +17,8 @@ class _SampleTabNavigationScreenState extends State<SampleTabNavigationScreen>
     with SingleTickerProviderStateMixin, RouteAware {
   SampleTabNavigationScreenBloc _tabNavigationScreenBloc;
   NavigationService _navigationService;
-  AnalyticsBloc _analyticsBloc;
+  AnalyticsService _analyticsService;
+  final FirebaseAnalyticsObserver observer = sl();
 
   TabController _controller;
   int selectedIndex = 0;
@@ -29,7 +26,7 @@ class _SampleTabNavigationScreenState extends State<SampleTabNavigationScreen>
   @override
   void initState() {
     super.initState();
-    _analyticsBloc = BlocProvider.of(context);
+    _analyticsService = sl();
     _tabNavigationScreenBloc = SampleTabNavigationScreenBloc();
     _navigationService = sl();
     _controller = TabController(
@@ -59,7 +56,7 @@ class _SampleTabNavigationScreenState extends State<SampleTabNavigationScreen>
       appBar: AppBar(title: Text('Another Page')),
       body: Center(
         child: BlocListener(
-          bloc: _tabNavigationScreenBloc,
+          cubit: _tabNavigationScreenBloc,
           listener: (_, TabState state) {
             _controller.animateTo(state.currentTab);
           },
@@ -69,7 +66,7 @@ class _SampleTabNavigationScreenState extends State<SampleTabNavigationScreen>
               Center(
                   child: Column(
                 children: <Widget>[
-                  Text('AC'),
+                  Text('AC Page'),
                   RaisedButton(
                     child: Text('Navigation Sample screen'),
                     onPressed: () {
@@ -84,7 +81,7 @@ class _SampleTabNavigationScreenState extends State<SampleTabNavigationScreen>
               Center(
                   child: Column(
                 children: <Widget>[
-                  Text('Alarm'),
+                  Text('Alarm Page'),
                   RaisedButton(
                     child: Text('Navigation Sample screen'),
                     onPressed: () {
@@ -114,7 +111,7 @@ class _SampleTabNavigationScreenState extends State<SampleTabNavigationScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    widget.observer.subscribe(this, ModalRoute.of(context));
+    observer.subscribe(this, ModalRoute.of(context));
   }
 
   @override
@@ -128,8 +125,9 @@ class _SampleTabNavigationScreenState extends State<SampleTabNavigationScreen>
   }
 
   void _sendCurrentTabToAnalytics() {
-    _analyticsBloc.add(
-      AnalyticsEventScreenView('TabNumber_$selectedIndex'),
-    );
+    _analyticsService.logScreenView(screenName: 'TabNumber_$selectedIndex');
+    // .add(
+    //   AnalyticsEventScreenView('TabNumber_$selectedIndex'),
+    // );
   }
 }

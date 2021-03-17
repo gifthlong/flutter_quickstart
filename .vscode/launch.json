@@ -5,14 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Flutter1",
+            "name": "Flutter",
+            "type": "dart",
             "request": "launch",
-            "type": "dart"
+            "program": "lib/main.dart"
         },
         {
-            "name": "Flutter2",
+            "name": "Flutter Driver",
+            "type": "dart",
             "request": "launch",
-            "type": "dart"
+            "program": "test_driver/app.dart"
         }
     ]
 }
